@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Planning - Dashboard</title>
-  <!-- แก้ไขให้ตรงกับชื่อไฟล์ style.css ใน GitHub ของคุณ -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
+<!-- Sidebar -->
 <nav class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">🏭</div>
@@ -21,36 +21,173 @@
   </div>
   <div class="sidebar-nav">
     <div class="nav-section-title">เมนูหลัก</div>
-    <a href="index.html" class="nav-item active">
+    <a href="index.html" class="nav-item active" data-page="index">
       <span class="nav-icon">📊</span><span>Dashboard EXport</span>
     </a>
-    <a href="backOrder.html" class="nav-item">
+    <a href="backorder.html" class="nav-item" data-page="backorder">
       <span class="nav-icon">📦</span><span>Back Order</span>
     </a>
-    <a href="urgent.html" class="nav-item">
+    <a href="urgent.html" class="nav-item" data-page="urgent">
       <span class="nav-icon">🚨</span><span>ด่วนวางแผน</span>
     </a>
-    <a href="ordertreat.html" class="nav-item">
+    <a href="treat.html" class="nav-item" data-page="treat">
       <span class="nav-icon">🍬</span><span>Treat Order</span>
     </a>
   </div>
   <div class="sidebar-footer">© 2025 Production Planning</div>
 </nav>
 
+<!-- Main Content -->
 <div class="main-content">
-  <!-- เนื้อหาเดิม... -->
   <header class="top-header">
     <div class="page-title">📊 <span>Dashboard ภาพรวมการวางแผน</span></div>
     <div class="header-spacer"></div>
     <div class="header-time" id="currentTime"></div>
+    <span class="header-badge">📋 Export Sheet</span>
   </header>
-  <div class="page-body">
-     <!-- ส่วนของ Filter และ Stats ที่เคยส่งให้ก่อนหน้านี้ -->
-     <p style="padding: 20px;">กำลังโหลดข้อมูล...</p>
-  </div>
-</div>
 
-<!-- แก้ไขให้ตรงกับชื่อไฟล์ script.js ใน GitHub ของคุณ -->
-<script src="script.js"></script>
+  <div class="page-body">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="form-group">
+        <label class="form-label">📅 วันเริ่มต้น</label>
+        <input type="date" id="f-start" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">📅 วันสิ้นสุด</label>
+        <input type="date" id="f-end" class="form-control" />
+      </div>
+      <input type="hidden" id="f-month" />
+      <input type="hidden" id="f-year" />
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <button class="btn btn-primary" onclick="loadData()">🔍 ค้นหา</button>
+        <button class="btn btn-outline" onclick="clearFilters()">🔄 รีเซ็ต</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--stat-color:#1a4f7a">
+        <div class="stat-icon">⚖️</div>
+        <div class="stat-info">
+          <div class="stat-value" id="s-tons">-</div>
+          <div class="stat-label">รวมเดือนนี้ (ตัน)</div>
+          <div class="stat-sub">น้ำหนักรวมทั้งหมด</div>
+        </div>
+      </div>
+      <div class="stat-card" style="--stat-color:#2e7d32">
+        <div class="stat-icon">🚢</div>
+        <div class="stat-info">
+          <div class="stat-value" id="s-containers">-</div>
+          <div class="stat-label">รวมเดือนนี้ (ตู้)</div>
+          <div class="stat-sub">จำนวนตู้ที่โหลด</div>
+        </div>
+      </div>
+      <div class="stat-card" style="--stat-color:#f57c00">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+          <div class="stat-value" id="s-waiting">-</div>
+          <div class="stat-label">รอโหลดทั้งหมด (ตู้)</div>
+          <div class="stat-sub">จากชีทรอโหลด</div>
+        </div>
+      </div>
+      <div class="stat-card" style="--stat-color:#c62828">
+        <div class="stat-icon">📋</div>
+        <div class="stat-info">
+          <div class="stat-value" id="s-planned">-</div>
+          <div class="stat-label">รอโหลดจากวางแผน</div>
+          <div class="stat-sub">มีหมายเลขตู้แล้ว</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warehouse Grid -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🏗️</span> สรุปจำนวนตู้แต่ละคลัง</div>
+        <span id="whTotalBadge" class="badge badge-info">รวม 0 ตู้</span>
+      </div>
+      <div class="card-body p-3">
+        <div id="wh-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-2-1 mb-6">
+
+      <!-- Daily Bar+Line Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📈</span> ปริมาณต่อวัน (ตัน)</div>
+          <span class="badge badge-primary">เดือนนี้</span>
+        </div>
+        <div class="card-body">
+          <div style="position:relative;height:260px;">
+            <canvas id="chart-daily"></canvas>
+          </div>
+          <div id="chart-error" style="display:none;text-align:center;padding:40px;color:#999;">
+            ⚠️ ไม่สามารถโหลด Chart ได้
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🏭</span> สัดส่วนตามคลัง</div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;justify-content:center;margin-bottom:12px;">
+            <canvas id="donutChart" style="max-height:200px;"></canvas>
+          </div>
+          <div id="warehouseLegend" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waiting Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⏳</span> รายการรอโหลด</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="waitingSearch" class="form-control"
+                 placeholder="🔍 ค้นหา..." style="width:180px;"
+                 oninput="filterWaitingTable()">
+          <span id="waiting-count" class="badge badge-warning">0 รายการ</span>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrapper" style="max-height:420px;overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>วันที่โหลด</th>
+                <th>PCG</th>
+                <th>SKU</th>
+                <th>ปริมาณ Order</th>
+                <th>ปริมาณรอผลิต</th>
+                <th>เครื่อง</th>
+                <th>หน่วยงาน</th>
+                <th>Remark</th>
+              </tr>
+            </thead>
+            <tbody id="waiting-tbody">
+              <tr>
+                <td colspan="9" class="table-empty">
+                  <span class="empty-icon">⏳</span> กำลังโหลด...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end page-body -->
+</div><!-- end main-content -->
+
+<script src="scripts.js"></script>
 </body>
 </html>
