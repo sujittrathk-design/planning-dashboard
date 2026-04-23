@@ -1,45 +1,478 @@
-<div class="header">🍬 Treat Order</div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Planning - Treat Order</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* ── Month Panel ─────────────────────── */
+    .month-panel {
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      user-select: none;
+    }
+    .month-panel:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    }
+    .month-panel.active-panel {
+      box-shadow: 0 0 0 3px white, 0 8px 28px rgba(0,0,0,0.2);
+      transform: translateY(-4px);
+    }
+    .month-panel.dimmed { opacity: 0.4; transform: none; }
 
-<div class="grid">
-  <div class="card">
-    <h3>เดือนนี้</h3>
-    <div id="current"></div>
+    /* This month — Teal/Emerald */
+    .panel-this .month-panel-header {
+      background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+    }
+    .panel-this .progress-fill-custom {
+      background: linear-gradient(90deg, #34d399, #059669);
+    }
+    .panel-this .panel-body {
+      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 60%);
+    }
+
+    /* Next month — Indigo/Violet */
+    .panel-next .month-panel-header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+    .panel-next .progress-fill-custom {
+      background: linear-gradient(90deg, #818cf8, #7c3aed);
+    }
+    .panel-next .panel-body {
+      background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 60%);
+    }
+
+    .month-panel-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 14px; font-weight: 700; }
+    .header-sub   { font-size: 11px; opacity: 0.7; margin-top: 1px; }
+    .order-badge  {
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Panel body */
+    .panel-body { padding: 16px 18px 14px; }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 6px 8px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      transition: box-shadow 0.15s;
+    }
+    .metric-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    .metric-icon-wrap {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    .icon-total    { background: #eff6ff; }
+    .icon-produced { background: #f0fdf4; }
+    .icon-pending  { background: #fff7ed; }
+
+    .metric-val {
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .val-total    { color: #1e293b; }
+    .val-produced { color: #059669; }
+    .val-pending  { color: #ea580c; }
+
+    .metric-label {
+      font-size: 10.5px;
+      color: #94a3b8;
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    /* Progress */
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .progress-label-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .progress-pct {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e293b;
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-track {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill-custom {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Filter info */
+    #filterInfo { display: none; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    #filterInfo.show { display: flex; }
+    .filter-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: white; }
+    .ft-this { background: #059669; }
+    .ft-next { background: #7c3aed; }
+    #clearFilterBtn {
+      font-size: 11px; color: #ef4444;
+      cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🏭</div>
+    <div>
+      <div class="logo-text">Data Planning</div>
+      <div class="logo-sub">Production System</div>
+    </div>
   </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-title">เมนูหลัก</div>
+    <a href="index.html" class="nav-item" data-page="index">
+      <span class="nav-icon">📊</span><span>Dashboard EXport</span>
+    </a>
+    <a href="backorder.html" class="nav-item" data-page="backorder">
+      <span class="nav-icon">📦</span><span>Back Order</span>
+    </a>
+    <a href="urgent.html" class="nav-item" data-page="urgent">
+      <span class="nav-icon">🚨</span><span>ด่วนวางแผน</span>
+    </a>
+    <a href="treat.html" class="nav-item active" data-page="treat">
+      <span class="nav-icon">🍬</span><span>Treat Order</span>
+    </a>
+  </div>
+  <div class="sidebar-footer">© 2025 Production Planning</div>
+</nav>
 
-  <div class="card">
-    <h3>เดือนหน้า</h3>
-    <div id="next"></div>
+<div class="main-content">
+  <header class="top-header">
+    <div class="page-title">🍬 <span>Treat Order</span></div>
+    <div class="header-spacer"></div>
+    <div class="header-time" id="currentTime"></div>
+    <button class="btn btn-outline" onclick="loadTreatData()">🔄 รีเฟรช</button>
+  </header>
+
+  <div class="page-body">
+
+    <!-- Month Panels -->
+    <div class="grid-2 mb-6">
+
+      <!-- This Month -->
+      <div class="month-panel panel-this" id="panelThis" onclick="setMonthFilter('this')">
+        <div class="month-panel-header">
+          <div class="header-left">
+            <div class="header-icon">📅</div>
+            <div>
+              <div class="header-title">เดือนนี้ (<span id="thisMonthName">-</span>)</div>
+              <div class="header-sub">แผนการผลิตปัจจุบัน</div>
+            </div>
+          </div>
+          <span id="thisMonthCount" class="order-badge">0 Order</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-total">🎯</div>
+              <div class="metric-val val-total" id="thisTotalOrder">-</div>
+              <div class="metric-label">Total Order (ตัน)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-produced">✅</div>
+              <div class="metric-val val-produced" id="thisProduced">-</div>
+              <div class="metric-label">ผลิตแล้ว (ตัน)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-pending">⏳</div>
+              <div class="metric-val val-pending" id="thisPending">-</div>
+              <div class="metric-label">ค้างผลิต (ตัน)</div>
+            </div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label-text">📈 ความคืบหน้า</div>
+            <div class="progress-pct" id="thisProgress">0%</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill-custom" id="thisProgressFill" style="width:0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Month -->
+      <div class="month-panel panel-next" id="panelNext" onclick="setMonthFilter('next')">
+        <div class="month-panel-header">
+          <div class="header-left">
+            <div class="header-icon">🗓️</div>
+            <div>
+              <div class="header-title">เดือนหน้า (<span id="nextMonthName">-</span>)</div>
+              <div class="header-sub">แผนการผลิตล่วงหน้า</div>
+            </div>
+          </div>
+          <span id="nextMonthCount" class="order-badge">0 Order</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-total">🎯</div>
+              <div class="metric-val val-total" id="nextTotalOrder">-</div>
+              <div class="metric-label">Total Order (ตัน)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-produced">✅</div>
+              <div class="metric-val val-produced" id="nextProduced">-</div>
+              <div class="metric-label">ผลิตแล้ว (ตัน)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon-wrap icon-pending">⏳</div>
+              <div class="metric-val val-pending" id="nextPending">-</div>
+              <div class="metric-label">ค้างผลิต (ตัน)</div>
+            </div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label-text">📈 ความคืบหน้า</div>
+            <div class="progress-pct" id="nextProgress">0%</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill-custom" id="nextProgressFill" style="width:0%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="icon">📋</span> รายการรอโหลด (จัดกลุ่มตามวันที่โหลด)
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="filterInfo">
+            <span id="filterTag" class="filter-tag"></span>
+            <button id="clearFilterBtn" onclick="clearMonthFilter()">ยกเลิกกรอง</button>
+          </div>
+          <span id="rowCountBadge" class="badge badge-warning">0 รายการ</span>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div id="groupedTableContainer" style="max-height:600px;overflow-y:auto;">
+          <div class="table-empty" style="padding:40px;">⏳ กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<div class="card">
-  <h3>📋 รอโหลด</h3>
-  <table class="table" id="table"></table>
-</div>
-
+<script src="scripts.js"></script>
 <script>
-async function init(){
-  const data = await fetchData("treatSummary");
+let treatData           = {};
+let allOrders           = [];
+let activeFilter        = 'all';
+let thisMonthNameGlobal = '';
+let nextMonthNameGlobal = '';
 
-  let html = "<tr><th>วันที่</th><th>Remark</th><th>แก้ไข</th></tr>";
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-  data.slice(1).forEach((r,i)=>{
-    html += `<tr>
-      <td>${r[0]}</td>
-      <td>${r[9]}</td>
-      <td>
-        <input onchange="update(${i+2},this.value)" />
-      </td>
-    </tr>`;
+function formatNumber(val, decimals) {
+  const n = Number(val) || 0;
+  return n.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function loadTreatData() {
+  showLoading('กำลังโหลด Treat Order...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      const data = typeof res === 'string' ? JSON.parse(res) : res;
+      if (data && data.success) {
+        treatData           = data;
+        thisMonthNameGlobal = data.thisMonthName || '';
+        nextMonthNameGlobal = data.nextMonthName || '';
+        renderMonthPanels();
+        allOrders = data.all || [];
+        applyFilter();
+      } else {
+        toastError('เกิดข้อผิดพลาด: ' + (data?.error || 'ไม่พบข้อมูล'));
+      }
+      hideLoading();
+    })
+    .withFailureHandler(function(e) { toastError('Server Error: ' + e.message); hideLoading(); })
+    .getTreatData();
+}
+
+function setMonthFilter(mode) {
+  if (activeFilter === mode) { clearMonthFilter(); return; }
+  activeFilter = mode;
+  const pThis = document.getElementById('panelThis');
+  const pNext = document.getElementById('panelNext');
+  pThis.classList.remove('active-panel','dimmed');
+  pNext.classList.remove('active-panel','dimmed');
+  if (mode === 'this') {
+    pThis.classList.add('active-panel'); pNext.classList.add('dimmed');
+    document.getElementById('filterTag').textContent = '📅 เดือนนี้';
+    document.getElementById('filterTag').className   = 'filter-tag ft-this';
+  } else {
+    pNext.classList.add('active-panel'); pThis.classList.add('dimmed');
+    document.getElementById('filterTag').textContent = '🗓️ เดือนหน้า';
+    document.getElementById('filterTag').className   = 'filter-tag ft-next';
+  }
+  document.getElementById('filterInfo').classList.add('show');
+  applyFilter();
+}
+
+function clearMonthFilter() {
+  activeFilter = 'all';
+  document.getElementById('panelThis').classList.remove('active-panel','dimmed');
+  document.getElementById('panelNext').classList.remove('active-panel','dimmed');
+  document.getElementById('filterInfo').classList.remove('show');
+  applyFilter();
+}
+
+function applyFilter() {
+  let filtered = allOrders;
+  if (activeFilter === 'this') filtered = allOrders.filter(r => String(r['เดือน']).trim() === thisMonthNameGlobal);
+  if (activeFilter === 'next') filtered = allOrders.filter(r => String(r['เดือน']).trim() === nextMonthNameGlobal);
+  renderTable(filtered);
+}
+
+function renderMonthPanels() {
+  const now      = new Date();
+  const nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  document.getElementById('thisMonthName').textContent = MONTHS_TH[now.getMonth()] + ' ' + (now.getFullYear() + 543);
+  document.getElementById('nextMonthName').textContent = MONTHS_TH[nextDate.getMonth()] + ' ' + (nextDate.getFullYear() + 543);
+
+  const renderPanel = (prefix, summary, orderList) => {
+    const total    = summary?.totalOrder || 0;
+    const produced = summary?.produced   || 0;
+    const pending  = summary?.pending    || 0;
+    const count    = Array.isArray(orderList) ? orderList.length : 0;
+    document.getElementById(prefix + 'TotalOrder').textContent = formatNumber(total,    1);
+    document.getElementById(prefix + 'Produced'  ).textContent = formatNumber(produced, 1);
+    document.getElementById(prefix + 'Pending'   ).textContent = formatNumber(pending,  1);
+    document.getElementById(prefix + 'MonthCount').textContent = count + ' Order';
+    const pct = total > 0 ? Math.round((produced / total) * 100) : 0;
+    document.getElementById(prefix + 'Progress'    ).textContent = pct + '%';
+    document.getElementById(prefix + 'ProgressFill').style.width = pct + '%';
+  };
+
+  renderPanel('this', treatData?.thisMonth?.summary, treatData?.thisMonth?.orders);
+  renderPanel('next', treatData?.nextMonth?.summary, treatData?.nextMonth?.orders);
+}
+
+function renderTable(orders) {
+  document.getElementById('rowCountBadge').textContent = orders.length + ' รายการ';
+  if (!orders.length) {
+    document.getElementById('groupedTableContainer').innerHTML =
+      '<div class="table-empty" style="padding:40px;">📭 ไม่มีข้อมูล</div>';
+    return;
+  }
+
+  const groups = {};
+  orders.forEach(r => {
+    const key = String(r['Loading Date'] || '').trim() || 'ไม่ระบุ';
+    if (!groups[key]) groups[key] = { loadingDate: r['Loading Date'] || '-', pending: 0, inspections: new Set(), remarks: new Set(), count: 0 };
+    groups[key].pending += parseFloat(r['ค้างผลิต']) || 0;
+    groups[key].count   += 1;
+    if (r['inspec'] && String(r['inspec']).trim()) groups[key].inspections.add(String(r['inspec']).trim());
+    if (r['Remark'] && String(r['Remark']).trim()) groups[key].remarks.add(String(r['Remark']).trim());
   });
 
-  document.getElementById("table").innerHTML = html;
+  const rowsHtml = Object.keys(groups).sort()
+    .filter(key => groups[key].pending > 0)
+    .map(key => {
+      const g = groups[key];
+      return `<tr class="table-row">
+        <td>${g.loadingDate}</td>
+        <td style="text-align:right;font-weight:700;">${g.pending.toFixed(1)}</td>
+        <td>${[...g.inspections].join(', ') || '-'}</td>
+        <td>${[...g.remarks].join(', ')     || '-'}</td>
+      </tr>`;
+    }).join('');
+
+  document.getElementById('groupedTableContainer').innerHTML = `
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th>📆 วันที่โหลด</th>
+          <th style="text-align:right;">⚖️ ค้างผลิต (ตัน)</th>
+          <th>🔍 Inspection</th>
+          <th>📝 หมายเหตุ</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml || '<tr><td colspan="4" style="text-align:center;padding:24px;color:#94a3b8;">ไม่มีรายการค้างผลิต</td></tr>'}</tbody>
+    </table>`;
 }
 
-async function update(row,val){
-  await fetch(`${API}?action=updateRemark&row=${row}&value=${val}`);
-  success("บันทึกแล้ว");
-}
-
-init();
+document.addEventListener('DOMContentLoaded', loadTreatData);
 </script>
+</body>
+</html>
