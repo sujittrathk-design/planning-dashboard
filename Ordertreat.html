@@ -348,25 +348,20 @@ function formatNumber(val, decimals) {
   return n.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-function loadTreatData() {
+async function loadTreatData() {
   showLoading('กำลังโหลด Treat Order...');
-  google.script.run
-    .withSuccessHandler(function(res) {
-      const data = typeof res === 'string' ? JSON.parse(res) : res;
-      if (data && data.success) {
-        treatData           = data;
-        thisMonthNameGlobal = data.thisMonthName || '';
-        nextMonthNameGlobal = data.nextMonthName || '';
-        renderMonthPanels();
-        allOrders = data.all || [];
-        applyFilter();
-      } else {
-        toastError('เกิดข้อผิดพลาด: ' + (data?.error || 'ไม่พบข้อมูล'));
-      }
-      hideLoading();
-    })
-    .withFailureHandler(function(e) { toastError('Server Error: ' + e.message); hideLoading(); })
-    .getTreatData();
+  const data = await callGAS('getTreatData');
+  if (data && data.success) {
+    treatData           = data;
+    thisMonthNameGlobal = data.thisMonthName || '';
+    nextMonthNameGlobal = data.nextMonthName || '';
+    renderMonthPanels();
+    allOrders = data.all || [];
+    applyFilter();
+  } else {
+    toastError('เกิดข้อผิดพลาด: ' + (data?.error || 'ไม่พบข้อมูล'));
+  }
+  hideLoading();
 }
 
 function setMonthFilter(mode) {
