@@ -1,0 +1,20 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+const API = "YOUR_WEBAPP_URL";
+
+// ===== FETCH =====
+async function fetchData(action){
+  const res = await fetch(`${API}?action=${action}`);
+  return await res.json();
+}
+
+// ===== ALERT =====
+function success(msg){
+  Swal.fire("สำเร็จ", msg, "success");
+}
+
+function error(msg){
+  Swal.fire("ผิดพลาด", msg, "error");
+}
+</script>

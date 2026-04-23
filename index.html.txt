@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <?!= include('Style'); ?>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>🏭 Planning</h2>
+  <a href="index.html">Dashboard</a>
+  <a href="BackOrder.html">BackOrder</a>
+  <a href="urgent.html">รอโหลด</a>
+  <a href="Ordertreat.html">Treat</a>
+</div>
+
+<div class="main">
+
+<h1>📊 Production Dashboard</h1>
+
+<!-- KPI -->
+<div class="grid">
+  <div class="card">
+    <div>🚚 โหลดแล้ว</div>
+    <div id="loaded" class="kpi green">0</div>
+  </div>
+
+  <div class="card">
+    <div>📦 รอโหลด</div>
+    <div id="waiting" class="kpi orange">0</div>
+  </div>
+
+  <div class="card">
+    <div>⚖️ Total Ton</div>
+    <div id="ton" class="kpi blue">0</div>
+  </div>
+</div>
+
+<br>
+
+<!-- Chart -->
+<div class="card">
+  <h3>📈 Loading per Day</h3>
+  <canvas id="chart"></canvas>
+</div>
+
+<br>
+
+<!-- Table -->
+<div class="card">
+  <h3>📋 Waiting List</h3>
+  <table class="table" id="table"></table>
+</div>
+
+</div>
+
+<?!= include('Script'); ?>
+
+<script>
+let chart;
+
+async function init(){
+  const exportData = await fetchData("export");
+  const waitingData = await fetchData("waiting");
+
+  document.getElementById("loaded").innerText = exportData.length-1;
+  document.getElementById("waiting").innerText = waitingData.length-1;
+
+  renderTable(waitingData);
+  renderChart(exportData);
+}
+
+function renderTable(data){
+  let html = `
+    <tr>
+      <th>ETL</th>
+      <th>ลูกค้า</th>
+      <th>SKU</th>
+      <th>Status</th>
+    </tr>
+  `;
+
+  data.slice(1).forEach(r=>{
+    html += `
+      <tr>
+        <td>${r[0]}</td>
+        <td>${r[1]}</td>
+        <td>${r[3]}</td>
+        <td><span class="badge delay">รอโหลด</span></td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("table").innerHTML = html;
+}
+
+function renderChart(data){
+  const labels = [];
+  const values = [];
+
+  data.slice(1).forEach(r=>{
+    labels.push(r[0]);
+    values.push(r[5] || 0);
+  });
+
+  const ctx = document.getElementById("chart");
+
+  chart = new Chart(ctx,{
+    type: 'line',
+    data:{
+      labels: labels,
+      datasets:[{
+        label: 'Ton',
+        data: values,
+        tension:0.4
+      }]
+    }
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>

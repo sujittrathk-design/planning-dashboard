@@ -1,0 +1,45 @@
+<div class="header">🍬 Treat Order</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>เดือนนี้</h3>
+    <div id="current"></div>
+  </div>
+
+  <div class="card">
+    <h3>เดือนหน้า</h3>
+    <div id="next"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>📋 รอโหลด</h3>
+  <table class="table" id="table"></table>
+</div>
+
+<script>
+async function init(){
+  const data = await fetchData("treatSummary");
+
+  let html = "<tr><th>วันที่</th><th>Remark</th><th>แก้ไข</th></tr>";
+
+  data.slice(1).forEach((r,i)=>{
+    html += `<tr>
+      <td>${r[0]}</td>
+      <td>${r[9]}</td>
+      <td>
+        <input onchange="update(${i+2},this.value)" />
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById("table").innerHTML = html;
+}
+
+async function update(row,val){
+  await fetch(`${API}?action=updateRemark&row=${row}&value=${val}`);
+  success("บันทึกแล้ว");
+}
+
+init();
+</script>

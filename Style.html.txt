@@ -1,0 +1,112 @@
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --primary: #38bdf8;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Layout */
+.sidebar {
+  width: 220px;
+  height: 100vh;
+  background: #020617;
+  position: fixed;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  color: var(--primary);
+}
+
+.sidebar a {
+  display: block;
+  color: #94a3b8;
+  padding: 10px;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.sidebar a:hover {
+  background: var(--primary);
+  color: black;
+}
+
+.main {
+  margin-left: 240px;
+  padding: 20px;
+}
+
+/* Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 15px;
+}
+
+.card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.kpi {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.kpi.green { color: var(--success); }
+.kpi.orange { color: var(--warning); }
+.kpi.blue { color: var(--primary); }
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px;
+  background: #020617;
+}
+
+.table td {
+  padding: 10px;
+  border-bottom: 1px solid #334155;
+}
+
+/* Badge */
+.badge {
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.badge.ok { background: #14532d; }
+.badge.delay { background: #7f1d1d; }
+
+/* Button */
+.btn {
+  background: var(--primary);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Chart */
+.chart {
+  height: 300px;
+}
+</style>

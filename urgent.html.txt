@@ -1,0 +1,22 @@
+<div class="header">⚠️ รอโหลด</div>
+
+<table class="table" id="urgent"></table>
+
+<script>
+async function init(){
+  const data = await fetchData("waiting");
+
+  let html = "<tr><th>SKU</th><th>Order</th></tr>";
+
+  data.slice(1).forEach(r=>{
+    html += `<tr>
+      <td>${r[3]}</td>
+      <td>${r[4]}</td>
+    </tr>`;
+  });
+
+  document.getElementById("urgent").innerHTML = html;
+}
+
+init();
+</script>
