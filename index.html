@@ -118,6 +118,20 @@ function renderChart(data){
 }
 
 init();
+ 
+const API = "https://script.google.com/macros/s/17Q4SbDvLiolRZof4b_Z1H5q9JZgI2c91xuNry4ac6II/exec"; // 👈 ใส่ตรงนี้
+
+async function load(){
+  const res = await fetch(API + "?action=export");
+  const data = await res.json();
+
+  console.log(data);
+
+  document.getElementById("loaded").innerText = data.length - 1;
+}
+
+load();
+
 </script>
 
 </body>
