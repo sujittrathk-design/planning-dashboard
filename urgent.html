@@ -120,21 +120,13 @@
 <script>
 async function loadUrgentData() {
   showLoading('กำลังโหลดรายการด่วน...');
-  google.script.run
-    .withSuccessHandler(function(res) {
-      const data = typeof res === 'string' ? JSON.parse(res) : res;
-      if (data && data.success) {
-        renderUrgentTable(data.headers, data.data);
-      } else {
-        toastError('ไม่สามารถโหลดข้อมูลได้: ' + (data?.error || 'Unknown error'));
-      }
-      hideLoading();
-    })
-    .withFailureHandler(function(err) {
-      toastError('เกิดข้อผิดพลาด: ' + err.message);
-      hideLoading();
-    })
-    .getUrgentData();
+  const data = await callGAS('getUrgentData');
+  if (data && data.success) {
+    renderUrgentTable(data.headers, data.data);
+  } else {
+    toastError('ไม่สามารถโหลดข้อมูลได้: ' + (data?.error || 'Unknown error'));
+  }
+  hideLoading();
 }
 
 function renderUrgentTable(headers, rows) {
