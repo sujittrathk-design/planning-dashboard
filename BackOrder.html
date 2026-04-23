@@ -135,9 +135,7 @@ function resetFilter() {
 }
 
 async function loadBackOrderData() {
-  if (typeof showLoading === 'function') {
-    showLoading('กำลังโหลด Back Order...');
-  }
+  showLoading('กำลังโหลด Back Order...');
 
   const filters = {
     startDate: document.getElementById('filterStart').value,
@@ -145,46 +143,26 @@ async function loadBackOrderData() {
     sku: document.getElementById('filterSku').value
   };
 
-  google.script.run
-    .withSuccessHandler(function(jsonString) {
-      try {
-        const res = JSON.parse(jsonString);
-        
-        if (res.error) {
-          Swal.fire('ข้อผิดพลาด', res.error, 'error');
-          return;
-        }
-
-        allData = Array.isArray(res) ? res : [];
-        
-        // สร้าง categoryMap จากข้อมูลที่ได้รับ โดยใช้ชื่อคอลัมน์จาก Google Sheets
-        categoryMap = {};
-        allData.forEach(row => {
-          const cat = row['Category'] || 'อื่นๆ';
-          if (!categoryMap[cat]) {
-            categoryMap[cat] = { total: 0, count: 0 };
-          }
-          // ดึงค่าจากคอลัมน์ 'Stockคงเหลือทั้งหมด'
-          const stockVal = parseInt(row['Stockคงเหลือทั้งหมด']) || 0;
-          categoryMap[cat].total += stockVal;
-          categoryMap[cat].count += 1;
-        });
-        
-        renderCategoryGrid();
-        filterTable();
-        
-      } catch (e) {
-        console.error('JSON Parse Error:', e);
-        Swal.fire('Error', 'การประมวลผลข้อมูลผิดพลาด', 'error');
-      } finally {
-        if (typeof hideLoading === 'function') hideLoading();
-      }
-    })
-    .withFailureHandler(function(err) {
-      Swal.fire('ระบบขัดข้อง', err.message, 'error');
-      if (typeof hideLoading === 'function') hideLoading();
-    })
-    .getBackOrderData(filters);
+  const res = await callGAS('getBackOrderData', filters);
+  
+  if (res) {
+    if (res.error) {
+      Swal.fire('ข้อผิดพลาด', res.error, 'error');
+    } else {
+      allData = Array.isArray(res) ? res : [];
+      categoryMap = {};
+      allData.forEach(row => {
+        const cat = row['Category'] || 'อื่นๆ';
+        if (!categoryMap[cat]) categoryMap[cat] = { total: 0, count: 0 };
+        const stockVal = parseInt(row['Stockคงเหลือทั้งหมด']) || 0;
+        categoryMap[cat].total += stockVal;
+        categoryMap[cat].count += 1;
+      });
+      renderCategoryGrid();
+      filterTable();
+    }
+  }
+  hideLoading();
 }
 
 function renderCategoryGrid() {
